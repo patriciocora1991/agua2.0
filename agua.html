@@ -3,246 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaFlow - Mi Hidratación Personal</title>
+    <title>Hidratación Diaria - Lic Patricio Cora</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --neon-green: #4ade80;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+        }
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #0a0a0a;
-            color: #e2e8f0;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
+            background-color: var(--dark-bg);
+            color: #f8fafc;
         }
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            border-radius: 24px;
+        .water-wave {
+            position: relative;
+            background-color: var(--neon-green);
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
         }
-        .btn-primary {
-            background: #10b981;
-            color: #000;
-            font-weight: 800;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .water-wave::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: -15px;
+            right: 0;
+            height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 120 28" xmlns="http://www.w3.org/2000/svg"><path d="M0 15 Q30 0 60 15 t60 0 v15 H0 z" fill="%234ade80"/></svg>');
+            background-size: 60px 20px;
+            animation: move-wave 2s linear infinite;
         }
-        .btn-primary:hover {
-            background: #34d399;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        @keyframes move-wave {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 60px; }
         }
-        .progress-circle {
-            transition: stroke-dashoffset 0.6s ease-out;
-            transform: rotate(-90deg);
-            transform-origin: center;
+        .neon-border {
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+        .neon-text {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+        input, select {
+            background-color: #334155 !important;
+            color: white !important;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-
-    <div class="max-w-4xl mx-auto">
-        <header class="flex flex-col items-center mb-10 text-center">
-            <h1 class="text-4xl font-extrabold text-emerald-500 italic tracking-tighter">AQUAFLOW</h1>
-            <p class="text-zinc-500 text-sm font-bold uppercase tracking-widest mt-1">Control de Hidratación Inteligente</p>
+<body class="min-h-screen font-sans">
+    <div id="app" class="max-w-md mx-auto p-4 md:p-6 pb-24">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-xl font-bold neon-text leading-tight">Hidratación diaria</h1>
+                <p class="text-[10px] text-green-500/70 font-bold uppercase tracking-widest mb-1">by Lic Patricio Cora</p>
+                <p id="current-date" class="text-gray-400 text-xs italic capitalize"></p>
+            </div>
+            <button onclick="toggleSettings()" class="bg-slate-800 p-2 rounded-full shadow-lg text-green-400 hover:bg-slate-700 transition border border-green-500/30">
+                <i class="fa-solid fa-sliders"></i>
+            </button>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Panel de Control Principal -->
-            <div class="space-y-6">
-                <div class="glass p-8 flex flex-col items-center shadow-2xl">
-                    <div class="relative w-56 h-56 mb-8">
-                        <svg class="w-full h-full" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="#1a1a1a" stroke-width="7" />
-                            <circle id="ring" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="7" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="round" class="progress-circle" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span id="pctText" class="text-5xl font-extrabold text-white">0%</span>
-                            <span class="text-[10px] text-emerald-500 uppercase font-bold tracking-widest">Progreso</span>
-                        </div>
+        <!-- Main Goal Card -->
+        <div class="bg-slate-800 rounded-3xl p-6 shadow-2xl mb-6 text-center relative overflow-hidden border border-slate-700">
+            <div id="main-display">
+                <div class="flex flex-col items-center mb-2">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Progreso de Hoy</h2>
+                    <span id="label-segment" class="text-[10px] uppercase font-bold bg-green-500/10 text-green-400 px-3 py-1 rounded-full mt-2 border border-green-500/20">Cargando perfil...</span>
+                </div>
+                
+                <div class="flex items-baseline justify-center gap-1 my-4">
+                    <span id="current-amount" class="text-6xl font-black neon-text tracking-tighter">0</span>
+                    <span id="target-amount" class="text-xl text-gray-500 font-bold">/ -- ml</span>
+                </div>
+                
+                <!-- Progress Visual -->
+                <div class="mt-6 relative w-32 h-48 mx-auto border-4 border-slate-700 rounded-b-2xl rounded-t-lg overflow-hidden bg-slate-900 shadow-inner">
+                    <div id="water-fill" class="water-wave absolute bottom-0 left-0 right-0 h-0"></div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span id="percent-display" class="text-white font-bold text-xl drop-shadow-md">0%</span>
+                    </div>
+                </div>
+
+                <!-- Reset Button inside the main card -->
+                <button onclick="confirmReset()" class="mt-6 text-[10px] text-red-400/60 hover:text-red-400 uppercase font-bold tracking-tighter transition flex items-center gap-1 mx-auto">
+                    <i class="fa-solid fa-rotate-right"></i> Reiniciar progreso diario
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Add Buttons -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <button onclick="addWater(200)" class="bg-slate-800 p-4 rounded-2xl shadow-lg hover:border-green-500/50 border border-transparent transition group text-center active:scale-95">
+                <i class="fa-solid fa-glass-empty text-green-400 text-xl mb-2"></i>
+                <span class="block text-xs font-bold text-gray-400">200 ml</span>
+            </button>
+            <button onclick="addWater(350)" class="bg-slate-800 p-4 rounded-2xl shadow-lg hover:border-green-500/50 border border-transparent transition group text-center active:scale-95">
+                <i class="fa-solid fa-glass-water text-green-400 text-xl mb-2"></i>
+                <span class="block text-xs font-bold text-gray-400">350 ml</span>
+            </button>
+            <button onclick="addWater(500)" class="bg-slate-800 p-4 rounded-2xl shadow-lg hover:border-green-500/50 border border-transparent transition group text-center active:scale-95">
+                <i class="fa-solid fa-bottle-water text-green-400 text-xl mb-2"></i>
+                <span class="block text-xs font-bold text-gray-400">500 ml</span>
+            </button>
+        </div>
+
+        <!-- Simplified Explanation Section -->
+        <div class="bg-slate-800 rounded-3xl p-6 text-gray-300 shadow-xl border border-slate-700">
+            <h3 class="font-bold flex items-center gap-2 mb-3 text-green-400">
+                <i class="fa-solid fa-brain"></i> ¿Cómo calculamos tu meta?
+            </h3>
+            <p id="calc-info" class="text-xs opacity-80 mb-4 leading-relaxed">
+                No todos los cuerpos son iguales. Usamos tu <b>peso</b> como base porque determina cuánta agua necesitan tus células para funcionar. Luego ajustamos por <b>edad</b> (ya que el metabolismo cambia) y sumamos un extra si haces <b>ejercicio</b> para recuperar lo que pierdes al sudar. Es tu receta personal para estar al 100%.
+            </p>
+            <div class="h-px bg-slate-700 mb-4"></div>
+            <h3 class="font-bold flex items-center gap-2 mb-2 text-sm text-green-400">
+                <i class="fa-solid fa-bolt"></i> Tip del momento
+            </h3>
+            <ul id="tips-list" class="text-xs space-y-2 opacity-90 italic">
+                <!-- Se llena dinámicamente -->
+            </ul>
+        </div>
+
+        <!-- Floating Settings Modal -->
+        <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="bg-slate-800 rounded-3xl p-8 w-full max-w-sm shadow-2xl border border-green-500/30">
+                <h2 class="text-xl font-bold text-green-400 mb-6">Tu Perfil</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Rango de Edad</label>
+                        <select id="input-age" class="w-full border-none rounded-xl p-3 focus:ring-2 focus:ring-green-400 outline-none">
+                            <option value="child">Niño / Joven</option>
+                            <option value="adult" selected>Adulto</option>
+                            <option value="senior">Adulto Mayor</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Peso Actual (kg)</label>
+                        <input type="number" id="input-weight" placeholder="Ej: 75" class="w-full border-none rounded-xl p-3 focus:ring-2 focus:ring-green-400 transition outline-none">
                     </div>
                     
-                    <div class="text-center mb-8">
-                        <div class="text-6xl font-black text-white leading-none mb-2">
-                            <span id="currentVal">0</span><span class="text-xl text-emerald-500 ml-1">ml</span>
-                        </div>
-                        <p class="text-zinc-500 font-bold uppercase text-xs tracking-widest">
-                            Meta: <span id="goalVal" class="text-emerald-400">2500</span> ml
-                        </p>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Nivel de Actividad</label>
+                        <select id="input-activity" class="w-full border-none rounded-xl p-3 focus:ring-2 focus:ring-green-400 outline-none">
+                            <option value="sedentary">Sedentario</option>
+                            <option value="moderate">Moderado</option>
+                            <option value="intense">Intenso / Atleta</option>
+                        </select>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4 w-full">
-                        <button id="add250" class="glass p-5 hover:bg-emerald-500/10 transition-all flex flex-col items-center group">
-                            <span class="text-2xl mb-2 group-hover:scale-110 transition-transform">💧</span>
-                            <span class="text-[10px] font-black uppercase tracking-widest">250ml</span>
-                        </button>
-                        <button id="add500" class="glass p-5 hover:bg-emerald-500/10 transition-all flex flex-col items-center group">
-                            <span class="text-2xl mb-2 group-hover:scale-110 transition-transform">🧪</span>
-                            <span class="text-[10px] font-black uppercase tracking-widest">500ml</span>
-                        </button>
-                        <button id="resetBtn" class="glass p-5 hover:bg-red-500/10 border-red-500/20 text-red-500 flex flex-col items-center group">
-                            <span class="text-2xl mb-2 group-hover:scale-110 transition-transform">🗑️</span>
-                            <span class="text-[10px] font-black uppercase tracking-widest">Reset</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Panel de Configuración e Historial -->
-            <div class="space-y-6">
-                <div class="glass p-6">
-                    <h3 class="text-xs font-black text-emerald-500 uppercase mb-5 tracking-[0.2em]">Configuración Personal</h3>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-[10px] text-zinc-500 mb-2 font-black uppercase">Peso Actual (kg)</label>
-                            <input type="number" id="weight" value="70" class="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-emerald-400 font-extrabold outline-none focus:border-emerald-500/50 transition-colors">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-zinc-500 mb-2 font-black uppercase">Actividad Física</label>
-                            <select id="activity" class="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-emerald-400 font-extrabold outline-none focus:border-emerald-500/50 transition-colors appearance-none">
-                                <option value="sedentary">Baja</option>
-                                <option value="moderate" selected>Media</option>
-                                <option value="active">Alta</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button id="btnSaveConfig" class="w-full mt-6 btn-primary py-4 rounded-xl text-xs uppercase tracking-widest">Actualizar Perfil</button>
-                </div>
-
-                <div class="glass p-6">
-                    <h3 class="text-xs font-black text-emerald-500 uppercase mb-5 tracking-[0.2em]">Resumen de la Semana</h3>
-                    <div class="h-56">
-                        <canvas id="chart"></canvas>
+                    <div class="pt-4 flex gap-2">
+                        <button onclick="saveSettings()" class="flex-1 bg-green-500 text-slate-900 font-black py-3 rounded-xl hover:bg-green-400 transition uppercase text-sm">Actualizar Meta</button>
+                        <button onclick="toggleSettings()" class="bg-slate-700 text-gray-300 font-bold py-3 px-4 rounded-xl hover:bg-slate-600 transition">X</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <footer class="mt-12 text-center">
-            <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.3em]">Tus datos se guardan localmente para mayor velocidad</p>
-        </footer>
+        <!-- Reset Confirmation Modal -->
+        <div id="reset-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-red-500/30 rounded-3xl p-6 text-center max-w-xs shadow-2xl">
+                <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                </div>
+                <h3 class="text-white font-bold mb-2">¿Reiniciar progreso?</h3>
+                <p class="text-gray-400 text-xs mb-6 italic">Esto borrará el agua registrada hoy y volverá a cero.</p>
+                <div class="flex gap-3">
+                    <button onclick="handleReset()" class="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl text-sm">Sí, reiniciar</button>
+                    <button onclick="closeResetModal()" class="flex-1 bg-slate-700 text-gray-300 font-bold py-2 rounded-xl text-sm">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-green-500 text-slate-900 px-8 py-3 rounded-full text-sm font-bold shadow-2xl opacity-0 transition-all duration-300 pointer-events-none transform translate-y-4">
+            ¡Hidratación registrada! ⚡
+        </div>
     </div>
 
     <script>
-        // Configuración inicial y datos
-        let chart = null;
-        let data = {
-            consumed: 0,
+        let state = {
+            current: 0,
+            goal: 2500,
             weight: 70,
             activity: 'moderate',
-            history: [0, 0, 0, 0, 0, 0, 0],
-            lastUpdate: new Date().toDateString()
+            ageRange: 'adult',
+            lastReset: null
         };
 
-        // Cargar datos al iniciar
-        function loadData() {
-            const saved = localStorage.getItem('aquaflow_local_v1');
+        const activityLabels = { sedentary: "Sedentario", moderate: "Moderado", intense: "Intenso" };
+        const ageLabels = { child: "Joven", adult: "Adulto", senior: "Adulto Mayor" };
+
+        function init() {
+            const saved = localStorage.getItem('aqua_flow_dark_state_v2');
             if (saved) {
-                data = JSON.parse(saved);
-                
-                // Verificar si ha cambiado el día para reiniciar el contador diario
-                const today = new Date().toDateString();
-                if (data.lastUpdate !== today) {
-                    data.consumed = 0;
-                    data.lastUpdate = today;
-                    saveData();
+                state = JSON.parse(saved);
+                const today = new Date().toLocaleDateString();
+                if (state.lastReset !== today) {
+                    state.current = 0;
+                    state.lastReset = today;
                 }
+            } else {
+                state.lastReset = new Date().toLocaleDateString();
             }
-            updateUI();
-        }
 
-        // Guardar datos
-        function saveData() {
-            const dayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0 para Lunes, 6 para Domingo
-            data.history[dayIdx] = data.consumed;
-            localStorage.setItem('aquaflow_local_v1', JSON.stringify(data));
-            updateUI();
-        }
-
-        // Lógica de UI
-        function updateUI() {
-            // Calcular meta: 35ml por kg + extra por actividad
-            const baseGoal = data.weight * 35;
-            const extra = data.activity === 'moderate' ? 500 : (data.activity === 'active' ? 1000 : 0);
-            const goal = baseGoal + extra;
-
-            const pct = Math.min(Math.round((data.consumed / goal) * 100), 100);
-            
-            // Textos
-            document.getElementById('currentVal').innerText = data.consumed;
-            document.getElementById('goalVal').innerText = goal;
-            document.getElementById('pctText').innerText = pct + '%';
-            document.getElementById('weight').value = data.weight;
-            document.getElementById('activity').value = data.activity;
-
-            // Anillo de progreso (282.7 es el perímetro del círculo r=45)
-            const ring = document.getElementById('ring');
-            const offset = 282.7 - (pct / 100) * 282.7;
-            ring.style.strokeDashoffset = offset;
-
-            renderChart(goal);
-        }
-
-        // Gráfico
-        function renderChart(goal) {
-            const ctx = document.getElementById('chart').getContext('2d');
-            if (chart) chart.destroy();
-            
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                    datasets: [{
-                        label: 'ml consumidos',
-                        data: data.history,
-                        backgroundColor: '#10b981',
-                        borderRadius: 8,
-                        hoverBackgroundColor: '#34d399'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: Math.max(goal + 500, Math.max(...data.history) + 500),
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#52525b', font: { size: 10, weight: 'bold' } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#52525b', font: { size: 10, weight: 'bold' } }
-                        }
-                    }
-                }
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-ES', { 
+                weekday: 'long', day: 'numeric', month: 'short' 
             });
+
+            updateUI();
         }
 
-        // Eventos
-        document.getElementById('add250').onclick = () => { data.consumed += 250; saveData(); };
-        document.getElementById('add500').onclick = () => { data.consumed += 500; saveData(); };
-        document.getElementById('resetBtn').onclick = () => { 
-            if(confirm('¿Deseas reiniciar tu progreso de hoy?')) {
-                data.consumed = 0; 
-                saveData(); 
-            }
-        };
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            document.getElementById('input-weight').value = state.weight;
+            document.getElementById('input-activity').value = state.activity;
+            document.getElementById('input-age').value = state.ageRange;
+            modal.classList.toggle('hidden');
+        }
 
-        document.getElementById('btnSaveConfig').onclick = () => {
-            const newWeight = parseFloat(document.getElementById('weight').value);
-            if (newWeight > 0) {
-                data.weight = newWeight;
-                data.activity = document.getElementById('activity').value;
-                saveData();
-                alert('Perfil actualizado correctamente');
-            }
-        };
+        function confirmReset() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
 
-        // Inicialización
-        window.onload = loadData;
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        function handleReset() {
+            state.current = 0;
+            saveToLocal();
+            updateUI();
+            closeResetModal();
+        }
+
+        function saveSettings() {
+            const weightInput = document.getElementById('input-weight');
+            const weight = parseFloat(weightInput.value);
+            const activity = document.getElementById('input-activity').value;
+            const age = document.getElementById('input-age').value;
+
+            if (weight > 0) {
+                state.weight = weight;
+                state.activity = activity;
+                state.ageRange = age;
+                
+                let factorBase = 35;
+                if (age === 'child') factorBase = 45;
+                if (age === 'senior') factorBase = 30;
+
+                let calculatedGoal = weight * factorBase;
+                if (activity === 'moderate') calculatedGoal += 500;
+                if (activity === 'intense') calculatedGoal += 1100;
+                if (calculatedGoal < 1200) calculatedGoal = 1200;
+
+                state.goal = Math.round(calculatedGoal);
+                saveToLocal();
+                updateUI();
+                toggleSettings();
+            }
+        }
+
+        function addWater(amount) {
+            state.current += amount;
+            saveToLocal();
+            updateUI();
+            showToast();
+        }
+
+        function updateUI() {
+            const percent = Math.min((state.current / state.goal) * 100, 100);
+            document.getElementById('current-amount').innerText = state.current;
+            document.getElementById('target-amount').innerText = `/ ${state.goal} ml`;
+            document.getElementById('water-fill').style.height = `${percent}%`;
+            document.getElementById('percent-display').innerText = `${Math.round(percent)}%`;
+            document.getElementById('label-segment').innerText = `${ageLabels[state.ageRange]} · ${activityLabels[state.activity]}`;
+
+            const tipsList = document.getElementById('tips-list');
+            let tipsHTML = "";
+            if (percent < 30) tipsHTML = "<li>• Tu cuerpo está pidiendo energía. El agua es el mejor combustible.</li>";
+            else if (percent >= 100) tipsHTML = "<li>• ¡Sistema optimizado! Estás en tu mejor nivel de hidratación.</li>";
+            else tipsHTML = "<li>• Mantén el ritmo. Estás cuidando tus riñones y tu piel.</li>";
+            tipsList.innerHTML = tipsHTML;
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('aqua_flow_dark_state_v2', JSON.stringify(state));
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2000);
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
