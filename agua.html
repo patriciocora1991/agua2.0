@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaFlow - Admin Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #050505;
+            color: #ecfdf5;
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(16, 185, 129, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .neon-gradient {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+        .progress-ring {
+            transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
+        }
+        .custom-input {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+        .custom-input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .tab-btn.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-bottom: 2px solid #10b981;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div id="loader" class="loading-overlay">
+        <div class="text-green-500 font-bold animate-pulse text-center">
+            <div class="mb-4 text-3xl">🌿</div>
+            Iniciando AquaFlow...
+        </div>
+    </div>
+
+    <!-- Navegación Principal -->
+    <nav class="max-w-5xl mx-auto mb-8 flex gap-4">
+        <button id="tabApp" class="tab-btn active px-6 py-2 rounded-t-lg font-bold transition-all uppercase tracking-widest text-xs">Calculadora</button>
+        <button id="tabAdmin" class="tab-btn px-6 py-2 rounded-t-lg font-bold transition-all uppercase tracking-widest text-xs">Panel Admin</button>
+    </nav>
+
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- VISTA CALCULADORA -->
+        <div id="viewApp" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <aside class="lg:col-span-4 space-y-6">
+                <div class="glass-card p-6 border-green-500/30">
+                    <h1 class="text-2xl font-bold flex items-center gap-2 mb-6 text-green-500">🌿 AquaFlow</h1>
+                    
+                    <div class="mb-6 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                        <label class="block text-[10px] uppercase tracking-widest text-emerald-500 mb-2 font-bold">ID de Usuario</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="userIdInput" class="w-full bg-black/40 border border-emerald-500/30 rounded-lg px-3 py-2 text-xs text-green-400 font-mono outline-none" placeholder="Tu nombre">
+                            <button id="btnCargar" class="bg-emerald-500 text-black px-3 rounded-lg text-xs font-bold hover:bg-emerald-400 transition-colors">OK</button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-emerald-500/70 mb-1 uppercase tracking-wider">Peso (kg)</label>
+                            <input type="number" id="weight" value="70" class="w-full custom-input rounded-xl px-4 py-3 outline-none font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-emerald-500/70 mb-1 uppercase tracking-wider">Actividad</label>
+                            <select id="activity" class="w-full custom-input rounded-xl px-4 py-3 outline-none appearance-none cursor-pointer">
+                                <option value="sedentary">Sedentario</option>
+                                <option value="moderate" selected>Moderado</option>
+                                <option value="active">Activo</option>
+                            </select>
+                        </div>
+                        <button id="btnActualizar" class="w-full neon-gradient hover:brightness-110 text-black py-4 rounded-xl font-black transition-all uppercase tracking-tighter">Actualizar Datos</button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="lg:col-span-8 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card p-8 flex flex-col items-center justify-center relative overflow-hidden bg-emerald-950/5">
+                        <svg class="w-48 h-48">
+                            <circle cx="96" cy="96" r="88" stroke="#111" stroke-width="12" fill="transparent" />
+                            <circle id="progressCircle" cx="96" cy="96" r="88" stroke="url(#greenGrad)" stroke-width="12" fill="transparent" stroke-dasharray="552.92" stroke-dashoffset="552.92" stroke-linecap="round" class="progress-ring" />
+                            <defs>
+                                <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#34d399" />
+                                    <stop offset="100%" stop-color="#059669" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center mt-4">
+                            <span id="percentLabel" class="text-5xl font-black text-green-400">0%</span>
+                            <span class="text-emerald-500/50 text-[10px] uppercase tracking-[0.2em] font-bold">Meta Diaria</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-8 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-emerald-500/60 text-xs font-bold uppercase mb-1 tracking-widest">Estado de Hoy</h3>
+                            <div class="text-6xl font-black text-white mb-2 leading-none"><span id="goalLabel">0</span><span class="text-xl text-green-500 ml-1">ml</span></div>
+                            <p class="text-emerald-200/40 text-sm">Registrado: <span id="currentLabel" class="text-green-400 font-bold">0</span> ml</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-3 mt-6">
+                            <button id="btnAdd250" class="flex flex-col items-center justify-center bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 p-2 rounded-xl transition-all group">
+                                <span class="text-2xl group-hover:scale-110 transition-transform">💧</span>
+                                <span class="text-[10px] font-bold text-emerald-500 mt-1 uppercase">250 ml</span>
+                            </button>
+                            <button id="btnAdd500" class="flex flex-col items-center justify-center bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 p-2 rounded-xl transition-all group">
+                                <span class="text-2xl group-hover:scale-110 transition-transform">🧪</span>
+                                <span class="text-[10px] font-bold text-emerald-500 mt-1 uppercase">500 ml</span>
+                            </button>
+                            <button id="btnReset" class="flex flex-col items-center justify-center bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-500 p-2 rounded-xl transition-all group">
+                                <span class="text-2xl group-hover:rotate-90 transition-transform">✖</span>
+                                <span class="text-[10px] font-bold mt-1 uppercase">Limpiar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Gráfica Semanal -->
+                <div class="glass-card p-6 h-72">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-emerald-500/60 text-[10px] font-bold uppercase tracking-widest">Consumo Semanal (Historial Real)</h3>
+                        <span class="text-[10px] text-emerald-500/40 font-mono" id="todayIndicator"></span>
+                    </div>
+                    <div class="relative h-48">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- VISTA ADMIN -->
+        <div id="viewAdmin" class="hidden">
+            <div class="glass-card p-8 border-green-500/30">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-black text-green-500 uppercase italic">Control Central</h2>
+                    <div id="adminAuth">
+                        <input type="password" id="adminPass" class="bg-black border border-emerald-500/30 rounded px-4 py-2 text-xs text-green-400 outline-none" placeholder="Clave de acceso">
+                    </div>
+                </div>
+
+                <div id="adminContent" class="hidden overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-emerald-500/50 text-[10px] uppercase tracking-widest border-b border-emerald-500/10">
+                                <th class="pb-4 font-black">Usuario</th>
+                                <th class="pb-4 font-black">Peso</th>
+                                <th class="pb-4 font-black">Actividad</th>
+                                <th class="pb-4 font-black">Consumo Hoy</th>
+                                <th class="pb-4 font-black text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersList" class="text-sm">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="adminLock" class="py-12 text-center text-emerald-500/30">
+                    <div class="text-4xl mb-4">🔒</div>
+                    <p>Panel restringido. Ingrese la clave maestra.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'aquaflow-admin';
+
+        let currentUser = null;
+        let userData = { 
+            weight: 70, 
+            activity: 'moderate', 
+            consumed: 0, 
+            lastReset: new Date().toDateString(),
+            history: [0, 0, 0, 0, 0, 0, 0] // [Lun, Mar, Mie, Jue, Vie, Sab, Dom]
+        };
+        let chartInstance = null;
+        let userUnsubscribe = null;
+        let allUsersUnsubscribe = null;
+
+        // --- AUTH ---
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                const input = document.getElementById('userIdInput');
+                if (!input.value) input.value = "User_" + user.uid.substring(0,4);
+                loadUserData(input.value);
+            }
+        });
+
+        // --- USER LOGIC ---
+        function getDayIndex() {
+            // JS 0 is Sunday, we want 0 for Monday
+            const day = new Date().getDay();
+            return day === 0 ? 6 : day - 1;
+        }
+
+        function loadUserData(id) {
+            if (userUnsubscribe) userUnsubscribe();
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+            userUnsubscribe = onSnapshot(docRef, (snap) => {
+                const today = new Date().toDateString();
+                const dayIdx = getDayIndex();
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    // Inicializar historial si no existe
+                    if (!data.history) data.history = [0, 0, 0, 0, 0, 0, 0];
+                    
+                    if (data.lastReset !== today) {
+                        // Es un nuevo día: resetear consumo diario pero mantener historial
+                        userData = { ...data, consumed: 0, lastReset: today };
+                        // Aseguramos que el historial del día actual empiece en 0 si es reset
+                        userData.history[dayIdx] = 0;
+                        saveToCloud(id);
+                    } else {
+                        userData = data;
+                    }
+                } else {
+                    userData = { 
+                        weight: 70, 
+                        activity: 'moderate', 
+                        consumed: 0, 
+                        lastReset: today,
+                        history: [0, 0, 0, 0, 0, 0, 0]
+                    };
+                    saveToCloud(id);
+                }
+                updateUI();
+                document.getElementById('loader').style.display = 'none';
+            });
+        }
+
+        async function saveToCloud(idOverride = null) {
+            if (!currentUser) return;
+            const id = idOverride || document.getElementById('userIdInput').value.trim();
+            // Siempre sincronizar el consumo de hoy con el historial
+            const dayIdx = getDayIndex();
+            userData.history[dayIdx] = userData.consumed;
+            
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), userData, { merge: true });
+        }
+
+        // --- ADMIN LOGIC ---
+        function setupAdminListener() {
+            if (allUsersUnsubscribe) allUsersUnsubscribe();
+            const usersCol = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+            allUsersUnsubscribe = onSnapshot(usersCol, (snap) => {
+                const list = document.getElementById('adminUsersList');
+                list.innerHTML = "";
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const id = docSnap.id;
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-emerald-500/5 hover:bg-emerald-500/5 transition-colors";
+                    row.innerHTML = `
+                        <td class="py-4 font-mono text-green-400 text-xs">${id}</td>
+                        <td class="py-4">${d.weight} kg</td>
+                        <td class="py-4 text-xs uppercase">${d.activity}</td>
+                        <td class="py-4 font-bold text-green-400">${d.consumed} ml</td>
+                        <td class="py-4 text-right">
+                            <button onclick="window.deleteUser('${id}')" class="text-red-500 hover:text-red-400 text-[10px] font-black uppercase tracking-tighter border border-red-500/20 px-2 py-1 rounded">Borrar</button>
+                        </td>
+                    `;
+                    list.appendChild(row);
+                });
+            });
+        }
+
+        window.deleteUser = async (id) => {
+            if (confirm(`¿Eliminar permanentemente a ${id}?`)) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id));
+            }
+        };
+
+        // --- UI & TABS ---
+        document.getElementById('tabApp').onclick = () => {
+            document.getElementById('viewApp').classList.remove('hidden');
+            document.getElementById('viewAdmin').classList.add('hidden');
+            document.getElementById('tabApp').classList.add('active');
+            document.getElementById('tabAdmin').classList.remove('active');
+        };
+
+        document.getElementById('tabAdmin').onclick = () => {
+            document.getElementById('viewApp').classList.add('hidden');
+            document.getElementById('viewAdmin').classList.remove('hidden');
+            document.getElementById('tabAdmin').classList.add('active');
+            document.getElementById('tabApp').classList.remove('active');
+        };
+
+        document.getElementById('adminPass').oninput = (e) => {
+            if (e.target.value === "1991") {
+                document.getElementById('adminContent').classList.remove('hidden');
+                document.getElementById('adminLock').classList.add('hidden');
+                e.target.classList.add('border-green-500');
+                setupAdminListener();
+            } else {
+                document.getElementById('adminContent').classList.add('hidden');
+                document.getElementById('adminLock').classList.remove('hidden');
+                e.target.classList.remove('border-green-500');
+            }
+        };
+
+        // --- BUTTON BINDINGS ---
+        document.getElementById('btnCargar').onclick = () => loadUserData(document.getElementById('userIdInput').value.trim());
+        document.getElementById('btnActualizar').onclick = () => {
+            userData.weight = parseFloat(document.getElementById('weight').value);
+            userData.activity = document.getElementById('activity').value;
+            saveToCloud();
+        };
+        document.getElementById('btnAdd250').onclick = () => { userData.consumed += 250; saveToCloud(); };
+        document.getElementById('btnAdd500').onclick = () => { userData.consumed += 500; saveToCloud(); };
+        document.getElementById('btnReset').onclick = () => { userData.consumed = 0; saveToCloud(); };
+
+        function updateUI() {
+            document.getElementById('weight').value = userData.weight;
+            document.getElementById('activity').value = userData.activity;
+            const goal = Math.round((userData.weight * 35) + (userData.activity === 'moderate' ? 500 : userData.activity === 'active' ? 1000 : 0));
+            document.getElementById('goalLabel').innerText = goal;
+            document.getElementById('currentLabel').innerText = userData.consumed;
+            const pct = Math.min(Math.round((userData.consumed / goal) * 100), 100);
+            document.getElementById('percentLabel').innerText = pct + '%';
+            const circum = 2 * Math.PI * 88;
+            document.getElementById('progressCircle').style.strokeDashoffset = circum - (pct / 100) * circum;
+            
+            document.getElementById('todayIndicator').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+            updateChart(goal);
+        }
+
+        function updateChart(goal) {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            const dayIdx = getDayIndex();
+            
+            if (chartInstance) chartInstance.destroy();
+            
+            // Colores dinámicos: resaltar hoy
+            const backgroundColors = userData.history.map((_, i) => 
+                i === dayIdx ? 'rgba(16, 185, 129, 0.8)' : 'rgba(16, 185, 129, 0.2)'
+            );
+            const borderColors = userData.history.map((_, i) => 
+                i === dayIdx ? '#10b981' : 'rgba(16, 185, 129, 0.4)'
+            );
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
+                    datasets: [{
+                        label: 'ml consumidos',
+                        data: userData.history,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw} ml / Meta: ${goal} ml`
+                            }
+                        }
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            suggestedMax: goal + 500,
+                            grid: { color: 'rgba(16, 185, 129, 0.05)' },
+                            ticks: { color: '#059669', font: { size: 10 } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#059669', font: { size: 10, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
