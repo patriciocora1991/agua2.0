@@ -3,328 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaFlow - Gestión de Usuarios</title>
+    <title>AquaFlow - Mi Hidratación Personal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #050505;
-            color: #ecfdf5;
+            background: #0a0a0a;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
         }
-        .glass-card {
-            background: rgba(16, 185, 129, 0.03);
-            backdrop-filter: blur(12px);
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(16, 185, 129, 0.2);
             border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
         }
-        .neon-gradient {
-            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        .btn-primary {
+            background: #10b981;
+            color: #000;
+            font-weight: 800;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .progress-ring {
-            transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .btn-primary:hover {
+            background: #34d399;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .progress-circle {
+            transition: stroke-dashoffset 0.6s ease-out;
             transform: rotate(-90deg);
-            transform-origin: 50% 50%;
+            transform-origin: center;
         }
-        .custom-input {
-            background: rgba(16, 185, 129, 0.05);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #10b981;
-        }
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: #050505;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-        .user-pill {
-            background: rgba(16, 185, 129, 0.05);
-            border: 1px solid rgba(16, 185, 129, 0.1);
-            transition: all 0.2s;
-        }
-        .user-pill:hover {
-            border-color: rgba(16, 185, 129, 0.4);
-            background: rgba(16, 185, 129, 0.1);
-        }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- Pantalla de carga persistente hasta conexión exitosa -->
-    <div id="loader" class="loading-overlay">
-        <div class="text-green-500 font-bold animate-pulse text-center">
-            <div class="mb-4 text-3xl">🌿</div>
-            <div id="loaderStatus">Conectando con el servidor...</div>
-            <div class="text-[10px] text-emerald-500/30 mt-2 uppercase tracking-widest">Asegurando conexión segura</div>
-        </div>
-    </div>
 
-    <div class="max-w-6xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
-            <div>
-                <h1 class="text-3xl font-black text-green-500 italic tracking-tighter">AQUAFLOW</h1>
-                <p class="text-emerald-500/50 text-[10px] uppercase font-bold tracking-[0.3em]">Smart Hydration Tracker</p>
-            </div>
-            <div class="bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
-                <span id="currentUserIDDisplay" class="text-xs font-mono text-emerald-400">Iniciando...</span>
-            </div>
+    <div class="max-w-4xl mx-auto">
+        <header class="flex flex-col items-center mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-emerald-500 italic tracking-tighter">AQUAFLOW</h1>
+            <p class="text-zinc-500 text-sm font-bold uppercase tracking-widest mt-1">Control de Hidratación Inteligente</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <aside class="lg:col-span-4 space-y-6">
-                <div class="glass-card p-6">
-                    <h2 class="text-sm font-bold text-emerald-500 uppercase mb-4 tracking-widest">Identificación</h2>
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="userIdInput" class="w-full bg-black/40 border border-emerald-500/30 rounded-xl px-4 py-3 text-sm text-green-400 outline-none focus:border-emerald-500" placeholder="Nombre">
-                        <button id="btnCargar" class="bg-emerald-500 text-black px-4 rounded-xl font-bold hover:bg-emerald-400 transition-colors">OK</button>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Panel de Control Principal -->
+            <div class="space-y-6">
+                <div class="glass p-8 flex flex-col items-center shadow-2xl">
+                    <div class="relative w-56 h-56 mb-8">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#1a1a1a" stroke-width="7" />
+                            <circle id="ring" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="7" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="round" class="progress-circle" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="pctText" class="text-5xl font-extrabold text-white">0%</span>
+                            <span class="text-[10px] text-emerald-500 uppercase font-bold tracking-widest">Progreso</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mb-8">
+                        <div class="text-6xl font-black text-white leading-none mb-2">
+                            <span id="currentVal">0</span><span class="text-xl text-emerald-500 ml-1">ml</span>
+                        </div>
+                        <p class="text-zinc-500 font-bold uppercase text-xs tracking-widest">
+                            Meta: <span id="goalVal" class="text-emerald-400">2500</span> ml
+                        </p>
                     </div>
 
-                    <div class="space-y-4 pt-4 border-t border-emerald-500/10">
+                    <div class="grid grid-cols-3 gap-4 w-full">
+                        <button id="add250" class="glass p-5 hover:bg-emerald-500/10 transition-all flex flex-col items-center group">
+                            <span class="text-2xl mb-2 group-hover:scale-110 transition-transform">💧</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">250ml</span>
+                        </button>
+                        <button id="add500" class="glass p-5 hover:bg-emerald-500/10 transition-all flex flex-col items-center group">
+                            <span class="text-2xl mb-2 group-hover:scale-110 transition-transform">🧪</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">500ml</span>
+                        </button>
+                        <button id="resetBtn" class="glass p-5 hover:bg-red-500/10 border-red-500/20 text-red-500 flex flex-col items-center group">
+                            <span class="text-2xl mb-2 group-hover:scale-110 transition-transform">🗑️</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Reset</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Configuración e Historial -->
+            <div class="space-y-6">
+                <div class="glass p-6">
+                    <h3 class="text-xs font-black text-emerald-500 uppercase mb-5 tracking-[0.2em]">Configuración Personal</h3>
+                    <div class="grid grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-[10px] font-bold text-emerald-500/50 uppercase mb-2 tracking-widest">Peso (kg)</label>
-                            <input type="number" id="weight" value="70" class="w-full custom-input rounded-xl px-4 py-3 outline-none font-bold">
+                            <label class="block text-[10px] text-zinc-500 mb-2 font-black uppercase">Peso Actual (kg)</label>
+                            <input type="number" id="weight" value="70" class="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-emerald-400 font-extrabold outline-none focus:border-emerald-500/50 transition-colors">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-emerald-500/50 uppercase mb-2 tracking-widest">Actividad</label>
-                            <select id="activity" class="w-full custom-input rounded-xl px-4 py-3 outline-none appearance-none cursor-pointer">
-                                <option value="sedentary">Sedentario</option>
-                                <option value="moderate" selected>Moderado</option>
-                                <option value="active">Activo</option>
+                            <label class="block text-[10px] text-zinc-500 mb-2 font-black uppercase">Actividad Física</label>
+                            <select id="activity" class="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-emerald-400 font-extrabold outline-none focus:border-emerald-500/50 transition-colors appearance-none">
+                                <option value="sedentary">Baja</option>
+                                <option value="moderate" selected>Media</option>
+                                <option value="active">Alta</option>
                             </select>
                         </div>
-                        <button id="btnActualizar" class="w-full neon-gradient text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs">Guardar Cambios</button>
                     </div>
+                    <button id="btnSaveConfig" class="w-full mt-6 btn-primary py-4 rounded-xl text-xs uppercase tracking-widest">Actualizar Perfil</button>
                 </div>
 
-                <div class="glass-card p-6 h-[400px] flex flex-col">
-                    <h2 class="text-sm font-bold text-emerald-500 uppercase mb-4 tracking-widest">Comunidad</h2>
-                    <div id="usersList" class="space-y-2 overflow-y-auto flex-1 pr-2">
-                        <!-- Usuarios cargados aquí -->
+                <div class="glass p-6">
+                    <h3 class="text-xs font-black text-emerald-500 uppercase mb-5 tracking-[0.2em]">Resumen de la Semana</h3>
+                    <div class="h-56">
+                        <canvas id="chart"></canvas>
                     </div>
                 </div>
-            </aside>
-
-            <main class="lg:col-span-8 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="glass-card p-8 flex flex-col items-center justify-center relative">
-                        <svg class="w-52 h-52">
-                            <circle cx="104" cy="104" r="95" stroke="#111" stroke-width="12" fill="transparent" />
-                            <circle id="progressCircle" cx="104" cy="104" r="95" stroke="#10b981" stroke-width="12" fill="transparent" stroke-dasharray="596.9" stroke-dashoffset="596.9" stroke-linecap="round" class="progress-ring" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center mt-4">
-                            <span id="percentLabel" class="text-6xl font-black text-white tracking-tighter">0%</span>
-                            <span class="text-emerald-500/50 text-[10px] uppercase tracking-[0.3em] font-bold">Meta</span>
-                        </div>
-                    </div>
-
-                    <div class="glass-card p-8 flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-emerald-500/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Recomendación</h3>
-                            <div class="flex items-baseline gap-2 mb-1">
-                                <span id="goalLabel" class="text-7xl font-black text-white leading-none">0</span>
-                                <span class="text-2xl font-bold text-green-500">ml</span>
-                            </div>
-                            <p class="text-emerald-500/60 text-sm">Hoy: <span id="currentLabel" class="text-green-400 font-bold">0</span> ml</p>
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-3 mt-8">
-                            <button id="btnAdd250" class="flex flex-col items-center p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/30">
-                                <span class="text-2xl mb-1">💧</span>
-                                <span class="text-[9px] font-black text-emerald-500 uppercase">250ml</span>
-                            </button>
-                            <button id="btnAdd500" class="flex flex-col items-center p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/30">
-                                <span class="text-2xl mb-1">🧪</span>
-                                <span class="text-[9px] font-black text-emerald-500 uppercase">500ml</span>
-                            </button>
-                            <button id="btnReset" class="flex flex-col items-center p-3 rounded-2xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/20 text-red-500">
-                                <span class="text-2xl mb-1">🗑️</span>
-                                <span class="text-[9px] font-black uppercase">Reset</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-6 h-72">
-                    <canvas id="weeklyChart"></canvas>
-                </div>
-            </main>
+            </div>
         </div>
+
+        <footer class="mt-12 text-center">
+            <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.3em]">Tus datos se guardan localmente para mayor velocidad</p>
+        </footer>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    <script>
+        // Configuración inicial y datos
+        let chart = null;
+        let data = {
+            consumed: 0,
+            weight: 70,
+            activity: 'moderate',
+            history: [0, 0, 0, 0, 0, 0, 0],
+            lastUpdate: new Date().toDateString()
+        };
 
-        let db, auth, appId;
-        let currentUserId = "";
-        let userData = { weight: 70, activity: 'moderate', consumed: 0, lastReset: new Date().toDateString(), history: [0,0,0,0,0,0,0] };
-        let chartInstance = null;
-        let userUnsub = null;
-
-        async function init() {
-            // Reintento infinito para capturar la config cuando esté lista
-            const config = await waitForConfig();
-            
-            try {
-                const app = initializeApp(config);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                appId = typeof __app_id !== 'undefined' ? __app_id : "aquaflow-stable";
-
-                // Iniciar sesión antes de cualquier consulta
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        const savedId = localStorage.getItem('aq_user') || "Admin";
-                        document.getElementById('userIdInput').value = savedId;
-                        loadUser(savedId);
-                        listenUsers();
-                    }
-                });
-            } catch (e) {
-                console.error("Firebase Init Error:", e);
-                // Si falla por API Key, reintentamos en 2 segundos
-                setTimeout(init, 2000);
-            }
-        }
-
-        async function waitForConfig() {
-            while (true) {
-                if (typeof __firebase_config !== 'undefined') {
-                    const c = JSON.parse(__firebase_config);
-                    // Solo aceptamos si la API Key parece válida (no un marcador)
-                    if (c.apiKey && !c.apiKey.includes("TU_API_KEY")) return c;
-                }
-                await new Promise(r => setTimeout(r, 500));
-            }
-        }
-
-        function listenUsers() {
-            const path = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-            onSnapshot(path, (snap) => {
-                const list = document.getElementById('usersList');
-                list.innerHTML = "";
-                snap.forEach(dSnap => {
-                    const id = dSnap.id;
-                    const data = dSnap.data();
-                    const isMe = id === currentUserId;
-                    const pill = document.createElement('div');
-                    pill.className = `user-pill p-3 rounded-xl flex justify-between items-center group ${isMe ? 'ring-1 ring-emerald-500' : ''}`;
-                    pill.innerHTML = `
-                        <div class="cursor-pointer flex-1" onclick="window.switchUser('${id}')">
-                            <div class="text-xs font-bold ${isMe ? 'text-emerald-400' : 'text-emerald-500/70'}">${id}</div>
-                            <div class="text-[9px] text-emerald-500/40 uppercase">${data.consumed || 0} ml</div>
-                        </div>
-                        <button onclick="window.delUser('${id}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-500">🗑️</button>
-                    `;
-                    list.appendChild(pill);
-                });
-            }, (err) => console.log("Silent error:", err));
-        }
-
-        function loadUser(id) {
-            if (userUnsub) userUnsub();
-            currentUserId = id;
-            localStorage.setItem('aq_user', id);
-            document.getElementById('currentUserIDDisplay').innerText = id;
-
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
-            userUnsub = onSnapshot(docRef, (snap) => {
+        // Cargar datos al iniciar
+        function loadData() {
+            const saved = localStorage.getItem('aquaflow_local_v1');
+            if (saved) {
+                data = JSON.parse(saved);
+                
+                // Verificar si ha cambiado el día para reiniciar el contador diario
                 const today = new Date().toDateString();
-                if (snap.exists()) {
-                    userData = snap.data();
-                    if (userData.lastReset !== today) {
-                        userData.consumed = 0;
-                        userData.lastReset = today;
-                        save();
-                    }
-                } else {
-                    userData = { weight: 70, activity: 'moderate', consumed: 0, lastReset: today, history: [0,0,0,0,0,0,0] };
-                    save();
+                if (data.lastUpdate !== today) {
+                    data.consumed = 0;
+                    data.lastUpdate = today;
+                    saveData();
                 }
-                updateUI();
-                document.getElementById('loader').style.display = 'none';
-            });
-        }
-
-        async function save() {
-            if (!auth.currentUser) return;
-            const dayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-            if (!userData.history) userData.history = [0,0,0,0,0,0,0];
-            userData.history[dayIdx] = userData.consumed;
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUserId);
-            await setDoc(docRef, userData, { merge: true });
-        }
-
-        window.switchUser = (id) => {
-            document.getElementById('userIdInput').value = id;
-            loadUser(id);
-        };
-
-        window.delUser = async (id) => {
-            if (confirm(`¿Borrar a ${id}?`)) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id));
-                if (id === currentUserId) location.reload();
             }
-        };
+            updateUI();
+        }
 
-        document.getElementById('btnCargar').onclick = () => loadUser(document.getElementById('userIdInput').value.trim());
-        document.getElementById('btnActualizar').onclick = () => {
-            userData.weight = parseFloat(document.getElementById('weight').value) || 70;
-            userData.activity = document.getElementById('activity').value;
-            save();
-        };
-        document.getElementById('btnAdd250').onclick = () => { userData.consumed += 250; save(); };
-        document.getElementById('btnAdd500').onclick = () => { userData.consumed += 500; save(); };
-        document.getElementById('btnReset').onclick = () => { userData.consumed = 0; save(); };
+        // Guardar datos
+        function saveData() {
+            const dayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0 para Lunes, 6 para Domingo
+            data.history[dayIdx] = data.consumed;
+            localStorage.setItem('aquaflow_local_v1', JSON.stringify(data));
+            updateUI();
+        }
 
+        // Lógica de UI
         function updateUI() {
-            const goal = Math.round((userData.weight * 35) + (userData.activity === 'moderate' ? 500 : userData.activity === 'active' ? 1000 : 0));
-            document.getElementById('goalLabel').innerText = goal; 
-            document.getElementById('currentLabel').innerText = userData.consumed;
-            document.getElementById('weight').value = userData.weight;
-            document.getElementById('activity').value = userData.activity;
-            const pct = Math.min(Math.round((userData.consumed / goal) * 100), 100);
-            document.getElementById('percentLabel').innerText = pct + '%';
-            const circumference = 2 * Math.PI * 95;
-            document.getElementById('progressCircle').style.strokeDashoffset = circumference - (pct / 100) * circumference;
+            // Calcular meta: 35ml por kg + extra por actividad
+            const baseGoal = data.weight * 35;
+            const extra = data.activity === 'moderate' ? 500 : (data.activity === 'active' ? 1000 : 0);
+            const goal = baseGoal + extra;
+
+            const pct = Math.min(Math.round((data.consumed / goal) * 100), 100);
             
-            const ctx = document.getElementById('weeklyChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
+            // Textos
+            document.getElementById('currentVal').innerText = data.consumed;
+            document.getElementById('goalVal').innerText = goal;
+            document.getElementById('pctText').innerText = pct + '%';
+            document.getElementById('weight').value = data.weight;
+            document.getElementById('activity').value = data.activity;
+
+            // Anillo de progreso (282.7 es el perímetro del círculo r=45)
+            const ring = document.getElementById('ring');
+            const offset = 282.7 - (pct / 100) * 282.7;
+            ring.style.strokeDashoffset = offset;
+
+            renderChart(goal);
+        }
+
+        // Gráfico
+        function renderChart(goal) {
+            const ctx = document.getElementById('chart').getContext('2d');
+            if (chart) chart.destroy();
+            
+            chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['L', 'M', 'X', 'J', 'V', 'S', 'D'],
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
                     datasets: [{
-                        data: userData.history || [0,0,0,0,0,0,0],
+                        label: 'ml consumidos',
+                        data: data.history,
                         backgroundColor: '#10b981',
-                        borderRadius: 5
+                        borderRadius: 8,
+                        hoverBackgroundColor: '#34d399'
                     }]
                 },
-                options: { 
-                    responsive: true, 
+                options: {
+                    responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#10b981' } } }
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: Math.max(goal + 500, Math.max(...data.history) + 500),
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#52525b', font: { size: 10, weight: 'bold' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#52525b', font: { size: 10, weight: 'bold' } }
+                        }
+                    }
                 }
             });
         }
 
-        init();
+        // Eventos
+        document.getElementById('add250').onclick = () => { data.consumed += 250; saveData(); };
+        document.getElementById('add500').onclick = () => { data.consumed += 500; saveData(); };
+        document.getElementById('resetBtn').onclick = () => { 
+            if(confirm('¿Deseas reiniciar tu progreso de hoy?')) {
+                data.consumed = 0; 
+                saveData(); 
+            }
+        };
+
+        document.getElementById('btnSaveConfig').onclick = () => {
+            const newWeight = parseFloat(document.getElementById('weight').value);
+            if (newWeight > 0) {
+                data.weight = newWeight;
+                data.activity = document.getElementById('activity').value;
+                saveData();
+                alert('Perfil actualizado correctamente');
+            }
+        };
+
+        // Inicialización
+        window.onload = loadData;
     </script>
 </body>
 </html>
